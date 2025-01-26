@@ -42,7 +42,7 @@ def select_all_option(driver):
         WebDriverWait(driver, 30).until(
             lambda d: len(d.find_elements(By.XPATH, "//table[contains(@class, 'Crom_table')]/tbody/tr")) > 50
         )
-        time.sleep(5)  # Additional buffer for the table to load
+        time.sleep(5)  
         print("Table updated after selecting 'All'.")
 
     except Exception as e:
@@ -52,7 +52,7 @@ def select_all_option(driver):
 
 def scrape_nba_stats_for_season(season, output_file):
     """Scrape all players' stats for a given season."""
-    driver = webdriver.Chrome()  # Ensure ChromeDriver is in PATH
+    driver = webdriver.Chrome() 
     try:
         # Build the URL
         url = build_nba_url(season)
@@ -79,7 +79,7 @@ def scrape_nba_stats_for_season(season, output_file):
         for row in table.find_elements(By.CSS_SELECTOR, "tbody tr"):
             cells = [cell.text.strip() for cell in row.find_elements(By.TAG_NAME, "td")]
             if len(cells) < len(headers):
-                cells.extend([None] * (len(headers) - len(cells)))  # Fill missing cells
+                cells.extend([None] * (len(headers) - len(cells)))  
             elif len(cells) > len(headers):
                 headers.extend([f"EXTRA_COLUMN_{i+1}" for i in range(len(cells) - len(headers))])  # Add extra columns
             rows.append(cells)
@@ -92,7 +92,7 @@ def scrape_nba_stats_for_season(season, output_file):
 
         # Save data to CSV
         df = pd.DataFrame(rows, columns=headers)
-        df["Season"] = season  # Add season column
+        df["Season"] = season  
         df.to_csv(output_file, mode="a", index=False, header=not os.path.exists(output_file))
         print(f"Data for season {season} saved successfully.")
 

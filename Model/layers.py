@@ -1,27 +1,27 @@
 import torch
 import torch.nn as nn
 
-class NormLayer(nn.Module):
-    def __init__(self, input_dim):
-        super().__init__()
-        self.eps = 1e-5
-        self.scale = nn.Parameter(torch.ones(input_dim))
-        self.shift = nn.Parameter(torch.zeros(input_dim))
+# class NormLayer(nn.Module):
+#     def __init__(self, input_dim):
+#         super().__init__()
+#         self.eps = 1e-5
+#         self.scale = nn.Parameter(torch.ones(input_dim))
+#         self.shift = nn.Parameter(torch.zeros(input_dim))
         
-    def forward(self, x):
-        mean = x.mean(dim=-1, keepdim=True)
-        var = x.var(dim=-1, unbiased=False)
-        norm_x = (x - mean) / torch.sqrt(var + self.eps)
+#     def forward(self, x):
+#         mean = x.mean(dim=-1, keepdim=True)
+#         var = x.var(dim=-1, unbiased=False)
+#         norm_x = (x - mean) / torch.sqrt(var + self.eps)
         
-        return self.scake * norm_x + self.shift
+#         return self.scake * norm_x + self.shift
     
-class FeedForward(nn.Module):
-    def __init__(self, model_config):
-        super().__init()
-        self.layers = nn.Sequential(nn.Linear(model_config["input_dim"], model_config["input_dim"]))
+# class FeedForward(nn.Module):
+#     def __init__(self, model_config):
+#         super().__init()
+#         self.layers = nn.Sequential(nn.Linear(model_config["input_dim"], model_config["input_dim"]))
     
-    def forward(self, x):
-        return self.layers(x)
+#     def forward(self, x):
+#         return self.layers(x)
         
 class MHA(nn.Module):
     def __init__(self, input_dim, hidden_size, 

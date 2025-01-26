@@ -13,12 +13,12 @@ class Block(nn.Module):
             dropout=model_config["dropout"],
             qkv_bias=model_config.get("qkv_bias", False)
         )
-        self.ff = FeedForward(model_config)
-        self.norm1 = NormLayer(model_config["input_dim"])
-        self.norm3 = NormLayer(model_config["input-dim"])
+        # self.ff = FeedForward(model_config)
+        # self.norm1 = NormLayer(model_config["input_dim"])
+        # self.norm3 = NormLayer(model_config["input-dim"])
         self.fc1 = nn.Linear(model_config["input_dim"], model_config["input_dim"]//2)
-        self.norm2 = NormLayer(model_config["input_dim"]//2)
-        self.norm4 = NormLayer(model_config["input_dim"]//2)
+        # self.norm2 = NormLayer(model_config["input_dim"]//2)
+        # self.norm4 = NormLayer(model_config["input_dim"]//2)
         self.fc2 = nn.Linear(model_config["input_dim"]//2, model_config["output_dim"])
         self.fc3 = nn.Linear(model_config["input_dim"], model_config["output_dim"])
         self.drop_shortcut = nn.Dropout(model_config["drop_rate"])
@@ -26,23 +26,24 @@ class Block(nn.Module):
     def forward(self, x):
         # Shortcut for attention block
         shortcut = x
-        x = self.norm1(x)
+        # x = self.norm1(x)
         x = self.att(x)
         x = self.drop_shortcut(x)
         skip = self.fc3(x)
-        x = self.norm2(self.fc1(x))
+        # x = self.norm2(self.fc1(x))
+        x = self.fc1(x)
         x = self.fc2(x)
         x = skip + shortcut + x
     
         # Shortcut
         shortcut = x
-        x = self.norm3(x)
-        x = self.ff(x)
-        x = self.drop_shortcut(x)
-        skip = self.fc3(x)
-        x = self.norm4(self.fc1(x))
-        x = self.fc2
-        x = skip + shortcut + x
+        # x = self.norm3(x)
+        # x = self.ff(x)
+        # x = self.drop_shortcut(x)
+        # skip = self.fc3(x)
+        # x = self.norm4(self.fc1(x))
+        # x = self.fc2
+        # x = skip + shortcut + x
         
         return x 
     
