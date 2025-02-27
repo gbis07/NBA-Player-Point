@@ -4,5 +4,9 @@ off of historical data on player performance, team stats, previous match outcome
 ~ = 8 --- Eight predictions for each output
 ~ timeseries data:
     Recurrent Neural Networks(RNNs)
-    Long Short-Term Memory(LSTM) **
+    Long Short-Term Memory(LSTM) - chose to use this architecture
     Convolutional Neural Networks(CNNs)
+
+~ The imports for tensorflow.keras work, even though the IDE might say importing the modules is not resolved-"reportMissingImports". 
+
+** 3 points made predictions are not accurate for some reason --> too large.
