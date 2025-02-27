@@ -4,5 +4,5 @@ off of historical data on player performance, team stats, previous match outcome
 ~ = 8 --- Eight predictions for each output
 ~ timeseries data:
     Recurrent Neural Networks(RNNs)
-    Long Short-Term Memory(LSTM)
+    Long Short-Term Memory(LSTM) **
     Convolutional Neural Networks(CNNs)
