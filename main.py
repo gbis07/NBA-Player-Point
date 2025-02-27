@@ -11,6 +11,7 @@ data = pd.read_csv('cleaned_data.csv')
 
 original_player_names = data['PLAYER'].copy()
 original_team_names = data['TEAM'].copy()
+currently_playing = data[data['Season'] == '2024-25'] #change
 
 # Encode string variables
 def encode_string(name):
@@ -147,10 +148,16 @@ original_test_predictions = np.zeros_like(test_predictions)
 for i in range(test_predictions.shape[1]):
     original_test_predictions[:, i] = scalers_y[i].inverse_transform(test_predictions[:, i].reshape(-1, 1)).flatten()
 
+# Filter for players currently playing    
+mask = player_test.isin(currently_playing['PLAYER'])
+filtered_preds = original_test_predictions[mask]
+filtered_player_test = player_test[mask]
+filtered_team_test = team_test[mask]
+
 # Create a DataFrame to display predictions with player names
-df_preds = pd.DataFrame(original_test_predictions, columns=labels)
-df_preds['PLAYER'] = player_test.values  # Attach player names from the test split
-df_preds['TEAM'] = team_test.values
+df_preds = pd.DataFrame(filtered_preds, columns=labels)
+df_preds['PLAYER'] = filtered_player_test.values  # Attach player names from the test split
+df_preds['TEAM'] = filtered_team_test.values # Attach team names from the test split
 cols = ['PLAYER'] + ['TEAM'] + labels
 df_preds = df_preds[cols]
 print(df_preds.head())

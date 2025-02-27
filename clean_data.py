@@ -14,13 +14,14 @@ df = df.drop(['EXTRA_COLUMN_1'], axis=1)
 print('\n Dropped extra column')
 print(df.head())
 
-currently_playing = df[df['Season'] == '2024-25']
-print('\nCurrently Playing')
-print(currently_playing)
-print(len(currently_playing))
+# currently_playing = df[df['Season'] == '2024-25']
+# print('\nCurrently Playing')
+# print(currently_playing)
+# print(len(currently_playing))
 
-filtered_df = df[df['PLAYER'].isin(currently_playing['PLAYER'])]
-print(filtered_df.head())
-print(len(filtered_df)) 
+# filtered_df = df[df['PLAYER'].isin(currently_playing['PLAYER'])]
+# print(filtered_df.head())
+# print(len(filtered_df)) 
 
-filtered_df.to_csv('cleaned_data.csv')
+# filtered_df.to_csv('cleaned_data.csv')
+df.to_csv('cleaned_data.csv')
