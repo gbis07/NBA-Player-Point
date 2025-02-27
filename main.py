@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 import tensorflow as tf
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Input, LSTM, Dense, Dropout, GlobalAveragePooling1D, MultiHeadAttention
@@ -9,6 +10,7 @@ from tensorflow.keras.layers import Input, LSTM, Dense, Dropout, GlobalAveragePo
 data = pd.read_csv('cleaned_data.csv')
 
 original_player_names = data['PLAYER'].copy()
+original_team_names = data['TEAM'].copy()
 
 # Encode string variables
 def encode_string(name):
@@ -34,18 +36,34 @@ sliced_seasons = {year: int(slice_season(year)) for year in unique_seasons}
 data['Season'] = data['Season'].replace(sliced_seasons)
 print(data.head())
 
-
-targets = data.iloc[:, [7, 19, 22, 11, 12, 21, 23, 20]].values
+# Labels for predicted metrics
+labels = [
+    "Expected points",
+    "Expected 3P made",
+    "Expected 3P attempted",
+    "Expected rebounds",
+    "Expected assists",
+    "Expected turnovers",
+    "Expected steals",
+    "Expected blocks"
+]
+targets = data[['PTS', '3PM', '3PA', 'REB', 'AST', 'TOV', 'STL', 'BLK']].values
 
 # Separate Features from dataframe
-feature_indices = [i for i in range(data.shape[1]) if i not in [0, 7, 11, 12, 19, 20, 21, 22, 23, 29]]
+feature_indices = [i for i in range(data.shape[1]) if i not in [ 7, 11, 12, 19, 20, 21, 22, 23,]]
 features = data.iloc[:, feature_indices].values
 
 # Standardize features and targets
 scaler_X = StandardScaler()
-scaler_y = StandardScaler()
 features = scaler_X.fit_transform(features)
-targets = scaler_y.fit_transform(targets)
+
+scalers_y = {}
+scaled_targets = np.zeros_like(targets)
+for i in range(targets.shape[1]):
+    scalers_y[i] = StandardScaler()
+    scaled_targets[:, i] = scalers_y[i].fit_transform(targets[:, i].reshape(-1, 1)).flatten()
+    print(f"Target {i} - Mean: {scalers_y[i].mean_[0]:.4f}, Std: {scalers_y[i].scale_[0]:.4f}")
+targets = scaled_targets
 
 # LSTM layers expect 3D input: (samples, timesteps, features)
 # For demonstration, if each row is independent, we create a sequence length of 1
@@ -53,7 +71,11 @@ X = features.reshape((features.shape[0], 1, features.shape[1]))
 y = targets
 
 # Split into training and testing sets
-X_train, X_test, y_train, y_test, player_train, player_test = train_test_split(X, y, original_player_names, test_size=0.2, random_state=42)
+X_train, X_test, y_train, y_test, player_train, player_test, team_train, team_test = train_test_split(X, y, original_player_names, original_team_names, test_size=0.2, random_state=42)
+
+# def weighted_mse(y_true, y_pred):
+#     weights = tf.constant([1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0], dtype=tf.float32)
+#     return tf.reduce_mean(tf.square((y_true - y_pred)) * weights)
 
 class PlayerStatsPredictor:
     def __init__(self, input_shape, lstm_units=128, num_heads=4, key_dim=32, dense_units=64, dropout_rate=0.2, output_dim=8):
@@ -86,7 +108,7 @@ class PlayerStatsPredictor:
         dropout = Dropout(self.dropout_rate)(dense)
         outputs = Dense(self.output_dim)(dropout)
         model = Model(inputs=inputs, outputs=outputs)
-        model.compile(optimizer='adam', loss='mse')
+        model.compile(optimizer='adam', loss='mse') # can replace with 'weighted_mse' function to tune loss
         return model
 
     def summary(self):
@@ -116,34 +138,35 @@ input_shape = (X_train.shape[1], X_train.shape[2])  # using timesteps and num_fe
 
 predictor = PlayerStatsPredictor(input_shape=input_shape)
 predictor.summary()
-history = predictor.train(X_train, y_train, X_val=X_test, y_val=y_test, epochs=50, batch_size=32)
+history = predictor.train(X_train, y_train, X_val=X_test, y_val=y_test, epochs=50, batch_size=4)
 
-# --- Make Predictions on Test Set with Player Tracking ---
+# Make Predictions on Test Set with Player Tracking 
 test_predictions = predictor.predict(X_test)
 # Inverse-transform predictions to recover original scale.
-original_test_predictions = scaler_y.inverse_transform(test_predictions)
-
-# Labels for predicted metrics
-labels = [
-    "Expected points",
-    "Expected rebounds",
-    "Expected steals",
-    "Expected 3P made",
-    "Expected 3P attempted",
-    "Expected turnovers",
-    "Expected blocks",
-    "Expected assists"
-]
+original_test_predictions = np.zeros_like(test_predictions)
+for i in range(test_predictions.shape[1]):
+    original_test_predictions[:, i] = scalers_y[i].inverse_transform(test_predictions[:, i].reshape(-1, 1)).flatten()
 
 # Create a DataFrame to display predictions with player names
 df_preds = pd.DataFrame(original_test_predictions, columns=labels)
 df_preds['PLAYER'] = player_test.values  # Attach player names from the test split
-cols = ['PLAYER'] + labels
+df_preds['TEAM'] = team_test.values
+cols = ['PLAYER'] + ['TEAM'] + labels
 df_preds = df_preds[cols]
 print(df_preds.head())
 
 # Evaluate on Test Data
 loss = predictor.evaluate(X_test, y_test)
 print("Test Loss:", loss)
+
+original_y_test = np.zeros_like(y_test)
+for i in range(y_test.shape[1]):
+    original_y_test[:, i] = scalers_y[i].inverse_transform(y_test[:, i].reshape(-1, 1)).flatten()
+
+for i, label in enumerate(labels):
+    mae = mean_absolute_error(original_y_test[:, i], original_test_predictions[:, i])
+    mse = mean_squared_error(original_y_test[:, i], original_test_predictions[:, i])
+    r2 = r2_score(original_y_test[:, i], original_test_predictions[:, i])
+    print(f"{label}: MAE = {mae:.2f}, MSE = {mse:.2f}, R² = {r2:.2f}")
 
 df_preds.to_csv('predictions.csv', index=False)

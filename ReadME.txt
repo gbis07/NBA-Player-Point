@@ -8,5 +8,3 @@ off of historical data on player performance, team stats, previous match outcome
     Convolutional Neural Networks(CNNs)
 
 ~ The imports for tensorflow.keras work, even though the IDE might say importing the modules is not resolved-"reportMissingImports". 
-
-** 3 points made predictions are not accurate for some reason --> too large.
